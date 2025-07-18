@@ -12,6 +12,8 @@ event = os.getenv("EVENT_NAME", "")
 ref_name = os.getenv("REF_NAME", "")
 ref_type = os.getenv("CREATED_REF_TYPE", "")
 
+message = None
+
 if event == "create" and ref_type == "branch":
     message = (
         f":seedling: *New Branch Created!* \n"
@@ -19,6 +21,7 @@ if event == "create" and ref_type == "branch":
         f"> *By:* `{actor}`\n"
         f"> *Repo:* `{repo}`"
     )
+
 elif event == "push":
     try:
         with open("commit_summary.txt") as f:
@@ -41,11 +44,12 @@ elif event == "push":
             f"> *Workflow:* {workflow}\n"
             f"> *Run:* https://github.com/{repo}/actions/runs/{run_id}"
         )
-else:
-    message = f":information_source: Unknown event `{event}` triggered by `{actor}` in `{repo}`"
 
-response = requests.post(webhook_url, json={"text": message})
-if response.status_code != 200:
-    print(f"Slack notification failed: {response.status_code} - {response.text}")
+if message:
+    response = requests.post(webhook_url, json={"text": message})
+    if response.status_code != 200:
+        print(f"Slack notification failed: {response.status_code} - {response.text}")
+    else:
+        print("Slack message sent.")
 else:
-    print("Slack message sent.")
+    print(f"No action for event `{event}` and ref_type `{ref_type}`.")
